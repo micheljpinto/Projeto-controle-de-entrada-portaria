@@ -55,19 +55,20 @@
   Created by: Dr. Charles A. Bell
 */
 
-#include "defines.h"
 #include <MySQL_Generic.h>
+#include <WiFi.h>
 
-char ssid[]           = "wifiMich";         // your network SSID (name)
-char pass[]           = "mich1983";         // your network password
+
+char ssid[]           = "default0";         // your network SSID (name)
+char pass[]           = "@hfj0601";         // your network password
 char user[]           = "sql10521606";      // MySQL user login username
 char password[]       = "YPeQmnMEeL";       // MySQL user login password
-char dbTable[]        = "sql10521606";
+char dbTable[]        = "michel_teste_db";
 #define dbserver      "sql10.freemysqlhosting.net"
 
 uint16_t server_port    = 3306;   
 char default_database[] = "sql10521606";           
-char default_table[]    = "hello_arduino";  
+char default_table[]    = "entrada";  
 
 
 #define USING_HOST_NAME     true //caso use dns deixar como true, se usar ip defina false
@@ -79,9 +80,11 @@ char default_table[]    = "hello_arduino";
   IPAddress server(dbserver);
 #endif
 
-  
+//Constantes do mysql  
 MySQL_Connection conn((Client *)&client);
 MySQL_Query *query_mem;
+
+//WiFiClient client;// definido na library generic
 
 String insertSensores(float valor) 
 {
@@ -91,61 +94,14 @@ String insertSensores(float valor)
   //Serial.print(INSERT_DATA);
   //return INSERT_DATA;
 
-  char INSERT_DATA[] = "INSERT INTO sql10521606.sensores VALUES (CURRENT_DATE(),CURRENT_TIME,'sensor', %f)";
+/*   char INSERT_DATA[] = "INSERT INTO sql10521606.sensores VALUES (CURRENT_TIMESTAMP(),CURRENT_TIME,'sensor', %f)"; */
+
+  char INSERT_DATA[] =  "INSERT INTO sql10521606.Entrada ( `Data`, `Tag`, `Nome`) VALUES ( NOW(), '55555555', 'Michel de Jesus Pinto')";
+
   char query[100]; 
   sprintf(query, INSERT_DATA, valor );
   Serial.print(query);
   return query;
-}
-
-void setup()
-{
-  Serial.begin(115200);
-  while (!Serial && millis() < 5000); // wait for serial port to connect
-
-  MYSQL_DISPLAY1("\nStarting Basic_Insert_WiFi on", BOARD_NAME);
-  MYSQL_DISPLAY(MYSQL_MARIADB_GENERIC_VERSION);
-
-  // Remember to initialize your WiFi module
-#if ( USING_WIFI_ESP8266_AT  || USING_WIFIESPAT_LIB ) 
-  #if ( USING_WIFI_ESP8266_AT )
-    MYSQL_DISPLAY("Using ESP8266_AT/ESP8266_AT_WebServer Library");
-  #elif ( USING_WIFIESPAT_LIB )
-    MYSQL_DISPLAY("Using WiFiEspAT Library");
-  #endif
-  
-  // initialize serial for ESP module
-  EspSerial.begin(115200);
-  // initialize ESP module
-  WiFi.init(&EspSerial);
-
-  MYSQL_DISPLAY(F("WiFi shield init done"));
-
-  // check for the presence of the shield
-  if (WiFi.status() == WL_NO_SHIELD)
-  {
-    MYSQL_DISPLAY(F("WiFi shield not present"));
-    // don't continue
-    while (true);
-  }
-#endif
-
-  // Begin WiFi section
-  MYSQL_DISPLAY1("Connecting to", ssid);
-
-  WiFi.begin(ssid, pass);
-  
-  while (WiFi.status() != WL_CONNECTED) 
-  {
-    delay(500);
-    MYSQL_DISPLAY0(".");
-  }
-
-  // print out info about the connection:
-  MYSQL_DISPLAY1("Connected to network. My IP address is:", WiFi.localIP());
-
-  MYSQL_DISPLAY3("Connecting to SQL Server @", server, ", Port =", server_port);
-  MYSQL_DISPLAY5("User =", user, ", PW =", password, ", DB =", default_database);
 }
 
 void runInsert(String value)
@@ -174,12 +130,31 @@ void runInsert(String value)
   }
 }
 
+void setup()
+{
+  Serial.begin(115200);
+  while (!Serial && millis() < 5000); // wait for serial port to connect
+
+  WiFi.begin(ssid, pass);
+  
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    delay(500);
+    MYSQL_DISPLAY0(".");
+  }
+
+  // print out info about the connection:
+  MYSQL_DISPLAY1("Connected to network. My IP address is:", WiFi.localIP());
+
+  MYSQL_DISPLAY3("Connecting to SQL Server @", server, ", Port =", server_port);
+  MYSQL_DISPLAY5("User =", user, ", PW =", password, ", DB =", default_database);
+}
+
 void loop()
 {
   MYSQL_DISPLAY("Connecting...");
   
   if (conn.connect(server, server_port, user, password))
-  //if (conn.connectNonBlocking(server, server_port, user, password) != RESULT_FAIL)
   {
     delay(500);
     runInsert(insertSensores(55.88));
@@ -190,8 +165,5 @@ void loop()
     MYSQL_DISPLAY("\nConnect failed. Trying again on next iteration.");
   }
 
-  MYSQL_DISPLAY("\nSleeping...");
-  MYSQL_DISPLAY("================================================");
- 
   delay(60000);
 }
